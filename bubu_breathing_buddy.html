@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubu Breathing Buddy</title>
+    <!-- Menggunakan fon mesra kanak-kanak yang bulat dan mudah dibaca -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS untuk susun atur responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --pastel-pink: #FFD6E8;
+            --pastel-blue: #D4F1F9;
+            --pastel-lavender: #E5D4EF;
+            --accent-pink: #FF7EB3;
+            --accent-blue: #56CCF2;
+            --accent-purple: #9B51E0;
+            --text-dark: #4A3B5C;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, var(--pastel-blue) 0%, var(--pastel-lavender) 50%, var(--pastel-pink) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Awan latar belakang terapung */
+        .cloud {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50px;
+            z-index: 0;
+            pointer-events: none;
+            animation: floatCloud linear infinite;
+        }
+        .cloud::after, .cloud::before {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+        }
+        .cloud-1 { width: 120px; height: 40px; top: 10%; left: -150px; animation-duration: 35s; }
+        .cloud-1::before { width: 50px; height: 50px; top: -25px; left: 20px; }
+        .cloud-1::after { width: 40px; height: 40px; top: -15px; left: 60px; }
+
+        .cloud-2 { width: 150px; height: 50px; top: 25%; left: -180px; animation-duration: 45s; animation-delay: 10s; }
+        .cloud-2::before { width: 65px; height: 65px; top: -30px; left: 25px; }
+        .cloud-2::after { width: 50px; height: 50px; top: -20px; left: 75px; }
+
+        @keyframes floatCloud {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(100vw + 250px)); }
+        }
+
+        /* Butang gaya permainan 3D comel */
+        .btn-cute {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(74, 59, 92, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-cute:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.03);
+        }
+        .btn-cute:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(74, 59, 92, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animasi kelipan mata Bubu */
+        @keyframes blink {
+            0%, 94%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.1); }
+        }
+        .bubu-eye {
+            transform-origin: center;
+            animation: blink 4s infinite;
+        }
+
+        /* Animasi telinga goyang lembut */
+        @keyframes earWiggleLeft {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-4deg); }
+        }
+        @keyframes earWiggleRight {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(4deg); }
+        }
+        .ear-left {
+            transform-origin: 120px 115px;
+            animation: earWiggleLeft 3.5s ease-in-out infinite;
+        }
+        .ear-right {
+            transform-origin: 180px 115px;
+            animation: earWiggleRight 3.5s ease-in-out infinite;
+        }
+
+        /* Pergerakan Bubu dan Belon dikawal oleh CSS Variables & Transitions */
+        #bubu-body-group {
+            transform-origin: 150px 240px;
+            transition: transform 0.3s ease-out;
+        }
+
+        #balloon-group {
+            transform-origin: 150px 225px;
+            transition: transform 0.3s ease-out;
+        }
+
+        /* Mod Tarik Nafas (3 saat) & Hembus Nafas (4 saat) */
+        .inhale-balloon {
+            transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+            transform: scale(1.85) translateY(-12px) !important;
+        }
+        .inhale-bubu {
+            transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+            transform: scale(1.06) translateY(-6px) !important;
+        }
+
+        .exhale-balloon {
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transform: scale(1) translateY(0px) !important;
+        }
+        .exhale-bubu {
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transform: scale(1) translateY(0px) !important;
+        }
+
+        /* Gelembung dialog */
+        .speech-bubble {
+            position: relative;
+            background: #FFFFFF;
+            border-radius: 28px;
+            border: 4px solid #F3D1F4;
+            box-shadow: 0 10px 25px rgba(155, 81, 224, 0.12);
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 18px 18px 0;
+            border-style: solid;
+            border-color: #FFFFFF transparent transparent;
+            display: block;
+            width: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 sm:p-6 relative">
+
+    <!-- Awan Hiasan Latar -->
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+
+    <!-- Bar Atas: Tajuk Kecil, Penunjuk Pusingan & Butang Mute -->
+    <header class="w-full max-w-2xl flex items-center justify-between z-10">
+        <div class="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border-2 border-white flex items-center gap-2">
+            <span class="text-xl">🐰</span>
+            <span class="font-bold text-sm sm:text-base tracking-wide text-purple-900">BUBU BREATHING BUDDY</span>
+        </div>
+
+        <!-- Penunjuk Pusingan (Hanya kelihatan semasa aktiviti pernafasan) -->
+        <div id="round-indicator" class="hidden bg-white/90 px-4 py-2 rounded-full shadow-sm border-2 border-pink-200 flex items-center gap-2">
+            <span class="text-xs sm:text-sm font-bold text-pink-600">Pusingan:</span>
+            <div class="flex gap-1.5" id="round-dots">
+                <span class="w-3.5 h-3.5 rounded-full bg-gray-200 transition-colors duration-300" id="dot-1"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-gray-200 transition-colors duration-300" id="dot-2"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-gray-200 transition-colors duration-300" id="dot-3"></span>
+            </div>
+        </div>
+
+        <!-- Butang Mute / Unmute -->
+        <button id="mute-btn" onclick="toggleMute()" aria-label="Tutup atau buka suara"
+            class="btn-cute bg-white text-purple-800 p-3 rounded-full border-2 border-purple-200 flex items-center justify-center focus:outline-none">
+            <!-- Ikon Bunyi Aktif -->
+            <svg id="icon-sound-on" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+            <!-- Ikon Bunyi Mute -->
+            <svg id="icon-sound-off" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+        </button>
+    </header>
+
+    <!-- Kawasan Utama Tengah -->
+    <main class="flex-1 flex flex-col items-center justify-center w-full max-w-xl z-10 my-2">
+        
+        <!-- Kotak Dialog Bubu & Arahan Pernafasan -->
+        <div class="w-full px-2 mb-3">
+            <div class="speech-bubble p-4 sm:p-5 text-center min-h-[105px] flex flex-col items-center justify-center">
+                <h1 id="main-message" class="text-xl sm:text-2xl md:text-3xl font-bold text-purple-900 leading-snug">
+                    Jom Bernafas Bersama Bubu!
+                </h1>
+                <!-- Pemasa Saat Besar semasa Tarik / Hembus Nafas -->
+                <div id="timer-display" class="hidden mt-1 flex items-center justify-center gap-3">
+                    <span id="phase-badge" class="px-4 py-1 rounded-full text-base sm:text-lg font-bold text-white bg-sky-400 shadow-sm">
+                        TARIK NAFAS
+                    </span>
+                    <span id="countdown-number" class="text-3xl sm:text-4xl font-extrabold text-pink-500">
+                        3
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watak Kartun 2D Bubu Si Arnab & Belon (SVG Responsif) -->
+        <div class="relative w-64 h-64 sm:w-80 sm:h-80 md:w-88 md:h-88 flex items-center justify-center">
+            <svg viewBox="0 0 300 310" class="w-full h-full drop-shadow-xl overflow-visible">
+                <!-- Bayang-bayang lembut di bawah Bubu -->
+                <ellipse cx="150" cy="292" rx="75" ry="12" fill="rgba(155, 81, 224, 0.15)" />
+
+                <!-- Kumpulan Badan Bubu (Bergerak perlahan semasa bernafas) -->
+                <g id="bubu-body-group">
+                    <!-- Kaki Kiri & Kanan -->
+                    <ellipse cx="115" cy="280" rx="22" ry="14" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3"/>
+                    <ellipse cx="115" cy="282" rx="12" ry="7" fill="#FFD6E8"/>
+                    <ellipse cx="185" cy="280" rx="22" ry="14" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3"/>
+                    <ellipse cx="185" cy="282" rx="12" ry="7" fill="#FFD6E8"/>
+
+                    <!-- Badan Gebu Bubu -->
+                    <ellipse cx="150" cy="225" rx="62" ry="60" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3.5"/>
+                    
+                    <!-- Telinga Kiri -->
+                    <g class="ear-left">
+                        <ellipse cx="118" cy="65" rx="18" ry="52" transform="rotate(-12 118 65)" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3.5"/>
+                        <ellipse cx="118" cy="68" rx="9" ry="38" transform="rotate(-12 118 68)" fill="#FFD6E8"/>
+                    </g>
+
+                    <!-- Telinga Kanan -->
+                    <g class="ear-right">
+                        <ellipse cx="182" cy="65" rx="18" ry="52" transform="rotate(12 182 65)" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3.5"/>
+                        <ellipse cx="182" cy="68" rx="9" ry="38" transform="rotate(12 182 68)" fill="#FFD6E8"/>
+                    </g>
+
+                    <!-- Kepala Comel Bubu -->
+                    <ellipse cx="150" cy="142" rx="68" ry="56" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3.5"/>
+
+                    <!-- Jambul Bulu Comel di Atas Kepala -->
+                    <path d="M142 87 Q150 74 156 86 Q163 77 162 89" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3" stroke-linecap="round"/>
+
+                    <!-- Pipi Merah Jambu -->
+                    <ellipse cx="105" cy="154" rx="12" ry="7" fill="#FFB3D1" opacity="0.75"/>
+                    <ellipse cx="195" cy="154" rx="12" ry="7" fill="#FFB3D1" opacity="0.75"/>
+
+                    <!-- Mata Kiri & Kanan dengan Kilauan -->
+                    <g class="bubu-eye">
+                        <circle cx="122" cy="138" r="8.5" fill="#4A3B5C"/>
+                        <circle cx="119" cy="135" r="3" fill="#FFFFFF"/>
+                        <circle cx="124" cy="140" r="1.5" fill="#FFFFFF"/>
+                    </g>
+                    <g class="bubu-eye">
+                        <circle cx="178" cy="138" r="8.5" fill="#4A3B5C"/>
+                        <circle cx="175" cy="135" r="3" fill="#FFFFFF"/>
+                        <circle cx="180" cy="140" r="1.5" fill="#FFFFFF"/>
+                    </g>
+
+                    <!-- Hidung Merah Jambu Comel -->
+                    <path d="M144 148 Q150 144 156 148 Q150 156 144 148 Z" fill="#FF7EB3"/>
+
+                    <!-- Mulut Bubu (Berubah mengikut keadaan: senyum / muncung hembus) -->
+                    <path id="bubu-mouth-smile" d="M138 158 Q144 165 150 157 Q156 165 162 158" fill="none" stroke="#4A3B5C" stroke-width="3" stroke-linecap="round"/>
+                    <circle id="bubu-mouth-blow" cx="150" cy="161" r="5" fill="#FF7EB3" stroke="#4A3B5C" stroke-width="2.5" class="hidden"/>
+
+                    <!-- Tangan Kiri & Kanan memeluk bahagian perut/belon -->
+                    <ellipse cx="102" cy="220" rx="18" ry="13" transform="rotate(25 102 220)" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3"/>
+                    <ellipse cx="198" cy="220" rx="18" ry="13" transform="rotate(-25 198 220)" fill="#FFFFFF" stroke="#E5D4EF" stroke-width="3"/>
+                </g>
+
+                <!-- Kumpulan Belon di Perut Bubu (Membesar & Mengecil) -->
+                <g id="balloon-group">
+                    <!-- Tali/Simpulan kecil bawah belon -->
+                    <polygon points="150,256 144,264 156,264" fill="#FF7EB3"/>
+                    <!-- Bentuk Belon Pastel -->
+                    <ellipse cx="150" cy="226" rx="34" ry="32" fill="url(#balloonGrad)" stroke="#FF7EB3" stroke-width="2.5"/>
+                    <!-- Pantulan cahaya pada belon -->
+                    <ellipse cx="137" cy="214" rx="7" ry="11" transform="rotate(-25 137 214)" fill="rgba(255, 255, 255, 0.65)"/>
+                </g>
+
+                <!-- Gradien warna belon -->
+                <defs>
+                    <radialGradient id="balloonGrad" cx="35%" cy="35%" r="65%">
+                        <stop offset="0%" stop-color="#FFE6F2"/>
+                        <stop offset="55%" stop-color="#FF9EC7"/>
+                        <stop offset="100%" stop-color="#FF7EB3"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Nota Keselamatan Mesra Kanak-Kanak -->
+        <p class="text-center text-xs sm:text-sm text-purple-800/80 bg-white/60 px-4 py-1.5 rounded-full mt-2 max-w-md">
+            💡 Tip Bubu: Tak perlu tahan nafas ya! Bernafas macam biasa kalau rasa kurang selesa.
+        </p>
+    </main>
+
+    <!-- Kawasan Butang Kawalan Bawah -->
+    <footer class="w-full max-w-md flex flex-col items-center justify-center gap-3 z-10 pb-2">
+        <!-- Skrin Utama: Butang MULA -->
+        <button id="start-btn" onclick="startExperience()"
+            class="btn-cute w-full sm:w-72 py-4 px-8 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white text-2xl sm:text-3xl font-bold tracking-wider border-4 border-white cursor-pointer">
+            MULA
+        </button>
+
+        <!-- Skrin Tamat: Butang CUBA LAGI & MENU UTAMA -->
+        <div id="end-buttons" class="hidden w-full flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="restartBreathing()"
+                class="btn-cute flex-1 py-3.5 px-6 rounded-full bg-gradient-to-r from-sky-400 to-blue-400 text-white text-xl font-bold border-4 border-white cursor-pointer">
+                CUBA LAGI
+            </button>
+            <button onclick="goToMainMenu()"
+                class="btn-cute flex-1 py-3.5 px-6 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 text-white text-xl font-bold border-4 border-white cursor-pointer">
+                MENU UTAMA
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // Pemboleh ubah keadaan aplikasi
+        let isMuted = false;
+        let currentSessionId = 0; // Untuk membatalkan sesi lama jika pengguna menekan butang lain
+        let activeTimers = [];
+
+        // Elemen DOM
+        const mainMessage = document.getElementById('main-message');
+        const timerDisplay = document.getElementById('timer-display');
+        const phaseBadge = document.getElementById('phase-badge');
+        const countdownNumber = document.getElementById('countdown-number');
+        const roundIndicator = document.getElementById('round-indicator');
+        const startBtn = document.getElementById('start-btn');
+        const endButtons = document.getElementById('end-buttons');
+        const balloonGroup = document.getElementById('balloon-group');
+        const bubuBodyGroup = document.getElementById('bubu-body-group');
+        const mouthSmile = document.getElementById('bubu-mouth-smile');
+        const mouthBlow = document.getElementById('bubu-mouth-blow');
+
+        // Muatkan senarai suara pelayar awal-awal
+        let availableVoices = [];
+        function loadVoices() {
+            if ('speechSynthesis' in window) {
+                availableVoices = window.speechSynthesis.getVoices();
+            }
+        }
+        if ('speechSynthesis' in window) {
+            loadVoices();
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // Fungsi mengurus pemasa supaya mudah dibersihkan apabila reset
+        function setSafeTimeout(callback, delay, sessionId) {
+            const id = setTimeout(() => {
+                if (sessionId === currentSessionId) {
+                    callback();
+                }
+            }, delay);
+            activeTimers.push(id);
+            return id;
+        }
+
+        function clearAllTimers() {
+            activeTimers.forEach(id => clearTimeout(id));
+            activeTimers = [];
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        // Kawalan Mute / Unmute
+        function toggleMute() {
+            isMuted = !isMuted;
+            const iconOn = document.getElementById('icon-sound-on');
+            const iconOff = document.getElementById('icon-sound-off');
+
+            if (isMuted) {
+                iconOn.classList.add('hidden');
+                iconOff.classList.remove('hidden');
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            } else {
+                iconOn.classList.remove('hidden');
+                iconOff.classList.add('hidden');
+            }
+        }
+
+        // Fungsi Suara Bahasa Melayu (Perlahan, Manja dan Bersahaja)
+        function speakMalay(text, onCompleteCallback, sessionId) {
+            // Jika sesi sudah bertukar, hentikan
+            if (sessionId !== currentSessionId) return;
+
+            // Jika dimute atau pelayar tidak menyokong SpeechSynthesis, guna anggaran masa membaca
+            if (isMuted || !('speechSynthesis' in window)) {
+                const estimatedTime = Math.max(2500, text.length * 75);
+                if (onCompleteCallback) {
+                    setSafeTimeout(onCompleteCallback, estimatedTime, sessionId);
+                }
+                return;
+            }
+
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                // Cari suara Bahasa Melayu (ms-MY atau ms) atau Bahasa Indonesia sebagai sandaran terdekat
+                const malayVoice = availableVoices.find(v => v.lang.toLowerCase().includes('ms')) ||
+                                   availableVoices.find(v => v.lang.toLowerCase().includes('id'));
+
+                if (malayVoice) {
+                    utterance.voice = malayVoice;
+                }
+                utterance.lang = 'ms-MY';
+
+                // Nada suara manja (sedikit tinggi) dan perlahan untuk kanak-kanak prasekolah
+                utterance.pitch = 1.25;
+                utterance.rate = 0.85;
+                utterance.volume = 1.0;
+
+                let hasFinished = false;
+                const finishHandler = () => {
+                    if (!hasFinished && sessionId === currentSessionId) {
+                        hasFinished = true;
+                        if (onCompleteCallback) {
+                            setSafeTimeout(onCompleteCallback, 450, sessionId);
+                        }
+                    }
+                };
+
+                utterance.onend = finishHandler;
+                utterance.onerror = finishHandler;
+
+                window.speechSynthesis.speak(utterance);
+
+                // Sandaran keselamatan sekiranya peristiwa onend tidak tercetus pada sesetengah pelayar mudah alih
+                const fallbackDuration = Math.max(3000, text.length * 95);
+                setSafeTimeout(finishHandler, fallbackDuration, sessionId);
+
+            } catch (e) {
+                const fallbackDuration = Math.max(2500, text.length * 75);
+                if (onCompleteCallback) {
+                    setSafeTimeout(onCompleteCallback, fallbackDuration, sessionId);
+                }
+            }
+        }
+
+        // Tetapkan semula animasi Bubu dan Belon ke keadaan asal
+        function resetVisuals() {
+            balloonGroup.classList.remove('inhale-balloon', 'exhale-balloon');
+            bubuBodyGroup.classList.remove('inhale-bubu', 'exhale-bubu');
+            mouthSmile.classList.remove('hidden');
+            mouthBlow.classList.add('hidden');
+            timerDisplay.classList.add('hidden');
+        }
+
+        // Kemas kini titik penunjuk pusingan (1 hingga 3)
+        function updateRoundDots(currentRound) {
+            roundIndicator.classList.remove('hidden');
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (i < currentRound) {
+                    dot.className = 'w-3.5 h-3.5 rounded-full bg-green-400 transition-colors duration-300';
+                } else if (i === currentRound) {
+                    dot.className = 'w-3.5 h-3.5 rounded-full bg-pink-500 scale-125 transition-all duration-300';
+                } else {
+                    dot.className = 'w-3.5 h-3.5 rounded-full bg-gray-200 transition-colors duration-300';
+                }
+            }
+        }
+
+        // Langkah 1 & 2: Mula apabila butang MULA ditekan
+        function startExperience() {
+            currentSessionId++;
+            const sessionId = currentSessionId;
+            clearAllTimers();
+            resetVisuals();
+
+            startBtn.classList.add('hidden');
+            endButtons.classList.add('hidden');
+            roundIndicator.classList.add('hidden');
+
+            const greetingText = "Hai kawan! Jom kita tenangkan diri bersama-sama.";
+            mainMessage.textContent = greetingText;
+
+            speakMalay(greetingText, () => {
+                explainBalloon(sessionId);
+            }, sessionId);
+        }
+
+        // Langkah 3: Bubu menerangkan teknik belon
+        function explainBalloon(sessionId) {
+            if (sessionId !== currentSessionId) return;
+
+            const explainText = "Kita bayangkan perut kita seperti belon. Jom ikut Bubu!";
+            mainMessage.textContent = explainText;
+
+            // Tunjukkan sedikit pergerakan belon sebagai contoh mesra
+            balloonGroup.style.transform = "scale(1.15)";
+            setSafeTimeout(() => {
+                balloonGroup.style.transform = "";
+            }, 1200, sessionId);
+
+            speakMalay(explainText, () => {
+                runBreathingCycle(1, sessionId);
+            }, sessionId);
+        }
+
+        // Langkah 4 & 5: Kitaran Pernafasan (Tarik 3s, Hembus 4s, Ulang 3 kali)
+        function runBreathingCycle(round, sessionId) {
+            if (sessionId !== currentSessionId) return;
+
+            if (round > 3) {
+                finishBreathing(sessionId);
+                return;
+            }
+
+            updateRoundDots(round);
+
+            // --- FASA TARIK NAFAS (3 SAAT) ---
+            mainMessage.textContent = "Tarik nafas perlahan-lahan...";
+            timerDisplay.classList.remove('hidden');
+            phaseBadge.textContent = "TARIK NAFAS";
+            phaseBadge.className = "px-4 py-1 rounded-full text-base sm:text-lg font-bold text-white bg-sky-400 shadow-sm";
+
+            // Muka Bubu tersenyum menarik nafas
+            mouthSmile.classList.remove('hidden');
+            mouthBlow.classList.add('hidden');
+
+            // Animasi belon membesar & Bubu bergerak perlahan (3 saat)
+            balloonGroup.classList.remove('exhale-balloon');
+            bubuBodyGroup.classList.remove('exhale-bubu');
+            void balloonGroup.offsetWidth; // Paksa reflow untuk animasi lancar
+            balloonGroup.classList.add('inhale-balloon');
+            bubuBodyGroup.classList.add('inhale-bubu');
+
+            // Suara panduan tarik nafas
+            speakMalay("Tarik nafas...", null, sessionId);
+
+            // Kiraan detik masa sebenar: 3, 2, 1
+            let inhaleSec = 3;
+            countdownNumber.textContent = inhaleSec;
+            countdownNumber.className = "text-3xl sm:text-4xl font-extrabold text-sky-500";
+
+            setSafeTimeout(() => { countdownNumber.textContent = "2"; }, 1000, sessionId);
+            setSafeTimeout(() => { countdownNumber.textContent = "1"; }, 2000, sessionId);
+
+            // --- FASA HEMBUS NAFAS (4 SAAT) selepas 3 saat ---
+            setSafeTimeout(() => {
+                if (sessionId !== currentSessionId) return;
+
+                mainMessage.textContent = "Hembus nafas perlahan-lahan...";
+                phaseBadge.textContent = "HEMBUS NAFAS";
+                phaseBadge.className = "px-4 py-1 rounded-full text-base sm:text-lg font-bold text-white bg-pink-400 shadow-sm";
+
+                // Mulut Bubu muncung comel menghembus nafas
+                mouthSmile.classList.add('hidden');
+                mouthBlow.classList.remove('hidden');
+
+                // Animasi belon mengecil & Bubu kembali tenang (4 saat)
+                balloonGroup.classList.remove('inhale-balloon');
+                bubuBodyGroup.classList.remove('inhale-bubu');
+                void balloonGroup.offsetWidth;
+                balloonGroup.classList.add('exhale-balloon');
+                bubuBodyGroup.classList.add('exhale-bubu');
+
+                // Suara panduan hembus nafas
+                speakMalay("Hembus nafas...", null, sessionId);
+
+                // Kiraan detik masa sebenar: 4, 3, 2, 1
+                countdownNumber.textContent = "4";
+                countdownNumber.className = "text-3xl sm:text-4xl font-extrabold text-pink-500";
+
+                setSafeTimeout(() => { countdownNumber.textContent = "3"; }, 1000, sessionId);
+                setSafeTimeout(() => { countdownNumber.textContent = "2"; }, 2000, sessionId);
+                setSafeTimeout(() => { countdownNumber.textContent = "1"; }, 3000, sessionId);
+
+                // Selesai pusingan ini selepas 4 saat, terus ke pusingan seterusnya (tanpa tahan nafas)
+                setSafeTimeout(() => {
+                    runBreathingCycle(round + 1, sessionId);
+                }, 4000, sessionId);
+
+            }, 3000, sessionId);
+        }
+
+        // Langkah 7: Tamat 3 pusingan
+        function finishBreathing(sessionId) {
+            if (sessionId !== currentSessionId) return;
+
+            resetVisuals();
+            // Tandakan semua 3 titik selesai
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`dot-${i}`).className = 'w-3.5 h-3.5 rounded-full bg-green-400 transition-colors duration-300';
+            }
+
+            const praiseText = "Wah, hebatnya awak! Terima kasih kerana bernafas bersama Bubu!";
+            mainMessage.textContent = praiseText;
+
+            // Bubu melompat gembira sedikit
+            bubuBodyGroup.style.transform = "translateY(-10px)";
+            setSafeTimeout(() => {
+                bubuBodyGroup.style.transform = "";
+            }, 500, sessionId);
+
+            speakMalay(praiseText, null, sessionId);
+
+            // Paparkan butang CUBA LAGI dan MENU UTAMA
+            endButtons.classList.remove('hidden');
+        }
+
+        // Fungsi Butang CUBA LAGI (Terus ulang aktiviti pernafasan 3 pusingan)
+        function restartBreathing() {
+            currentSessionId++;
+            const sessionId = currentSessionId;
+            clearAllTimers();
+            resetVisuals();
+
+            endButtons.classList.add('hidden');
+            mainMessage.textContent = "Jom kita cuba sekali lagi bersama Bubu!";
+
+            speakMalay("Jom kita cuba sekali lagi!", () => {
+                runBreathingCycle(1, sessionId);
+            }, sessionId);
+        }
+
+        // Fungsi Butang MENU UTAMA
+        function goToMainMenu() {
+            currentSessionId++;
+            clearAllTimers();
+            resetVisuals();
+
+            roundIndicator.classList.add('hidden');
+            endButtons.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            mainMessage.textContent = "Jom Bernafas Bersama Bubu!";
+        }
+    </script>
+</body>
+</html>
